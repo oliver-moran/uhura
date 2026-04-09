@@ -121,9 +121,9 @@ function callback(level, args) {
         const [label, ms, ...logs] = args;
 
         native.log(...logs);
-        native.log(`${label}: I cannot change the laws of physics, Captain! A've got to have ${ms + 10}ms.`);
+        native.log(`${label}: I cannot change the laws of physics, Captain! A've got to have ${ms}ms.`);
         // Beam us up, fast.
-        // Scotty: I cannot change the laws of physics, Captain! A've got to have 10ms.
+        // Scotty: I cannot change the laws of physics, Captain! A've got to have 0ms.
     }
 };
 
