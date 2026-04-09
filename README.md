@@ -52,8 +52,8 @@ console.log(quote);
 - `LogLevel.ERROR`
 - `LogLevel.NONE` (disables all logging)
 
-Additionally, there is a special logging level, `LogLevel.TIMER`, which operates
-independently of this hierarchy.
+Additionally, there are a special logging levels, `LogLevel.TIMER` and
+`LogLevel.Counter`, that operate independently of this hierarchy.
 
 ```javascript
 import { console, native, LogLevel } from "uhura";
@@ -80,15 +80,18 @@ native.info("The Prime Directive is not just a set of rules.");
 // The Prime Directive is not just a set of rules.
 ```
 
-Timers can also be enabled or disabled:
+Timers and counters can also be enabled or disabled:
 
 ```javascript
-console({ time: false })
+console({ count: false, time: false })
 
 // Won't be displayed:
 
 console.time("Warp engines online");
 console.timeEnd("Warp engines online");
+
+console.count("...to beam up.");
+console.countReset("...to beam up.");
 ```
 
 And stack tracing on errors:
@@ -111,12 +114,18 @@ You can define a custom callback function that is executed after every console
 event:
 
 ```javascript
+import { console, native, LogLevel, LogLabel } from "uhura";
+
 function callback(level, args) {
     // Careful: Use the native console in the callback function. Otherwise,
     // you may cause an infinite loop of callbacks.
 
     if (level >= LogLevel.WARN) {
-        /* Add code to save logs to a file or database here. */
+        // Add code to save logs to a file or database here.
+
+        const label = LogLabel[level];
+        native.log(label, ...args);
+        // WARN I'm a doctor, not a mechanic.
     }
 
     if (level === LogLevel.TIMER) {
@@ -130,6 +139,10 @@ function callback(level, args) {
 };
 
 console({ time: true, callback: callback });
+
+console.warn("I'm a doctor, not a mechanic.");
+// [ WARN ] 2026-04-01T12:00:00.000Z
+// (string) I'm a doctor, not a mechanic.
 
 console.time("Scotty");
 console.timeLog("Scotty", "Beam us up, fast.");
