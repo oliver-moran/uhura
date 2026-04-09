@@ -44,11 +44,9 @@ describe('Counters', () => {
     expect(log).toHaveBeenCalledWith(expect.stringContaining('1'));
   });
 
-  test('When a counter does not exist, it starts at 0', () => {
+  test('When a counter does not exist, reset does nothing', () => {
     console.countReset('newCounter');
-    expect(log).toHaveBeenCalledWith(expect.stringContaining('COUNT'));
-    expect(log).toHaveBeenCalledWith(expect.stringContaining('newCounter'));
-    expect(log).toHaveBeenCalledWith(expect.stringContaining('0'));
+    expect(log).not.toHaveBeenCalled();
   });
 
   test('When counters are disabled, they don\'t run', () => {

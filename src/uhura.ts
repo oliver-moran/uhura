@@ -191,8 +191,11 @@ console.count = (label: string = DEFAULT): void => {
  */
 console.countReset = (label: string = DEFAULT): void => {
     if (typeof label !== "string") label = DEFAULT;
-    counters.delete(label);
-    outputCounter(label);
+    const exists = !!counters.get(label);
+    if (exists) {
+        counters.delete(label);
+        outputCounter(label);
+    }
 };
 
 /**

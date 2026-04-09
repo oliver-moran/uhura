@@ -164,6 +164,7 @@ native console's error method.
 - Calling `console.time` with an already existing label will do nothing.
 - Calling `console.timeLog` or `console.timeEnd` with a non-existent label will
 do nothing.
+- Calling `console.countReset` with a non-existing label will do nothing.
 
 ## License
 
