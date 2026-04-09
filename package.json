@@ -1,6 +1,6 @@
 {
   "name": "@oliver.moran/uhura",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A drop-in replacement for console designed for terminal output.",
   "main": "dist/uhura.min.js",
   "scripts": {
