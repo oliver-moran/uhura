@@ -142,8 +142,11 @@ console.timeLog("Scotty", "Beam us up, fast.");
 case of an error:
 
 - Invalid settings are ignored when calling `console`.
+- If an object cannot be serialised then it is cast as a String (`[object
+Object]`).
 - Calling `console.time` with an already existing label will do nothing.
-- Calling `console.timeLog` or `console.timeEnd` with a non-existent label will do nothing.
+- Calling `console.timeLog` or `console.timeEnd` with a non-existent label will
+do nothing.
 
 ## License
 
