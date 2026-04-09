@@ -35,9 +35,6 @@ describe('Timers', () => {
   test('When a timer does not exist, it warns of this', () => {
     console.timeEnd('nonExistentTimer');
     expect(log).not.toHaveBeenCalled();
-
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('TIMER'));
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('nonExistentTimer'));
   });
 
   test('When timers are disabled, they don\'t run', () => {

@@ -41,15 +41,21 @@ console.log(quote);
 
 ## Log levels
 
+`uhura` uses a hierarchy of logging levels:
+
+- `LogLevel.LOG` (logs everything)
+- `LogLevel.DEBUG`
+- `LogLevel.INFO`
+- `LogLevel.WARN`
+- `LogLevel.ERROR`
+- `LogLevel.NONE` (disables all logging)
+
+Additionally, there is a special logging level, `LogLevel.TIMER`, which operates
+independently of this hierarchy.
+
 ```javascript
 import { console, native, LogLevel } from "uhura";
 
-// LogLevel.LOG
-// LogLevel.DEBUG
-// LogLevel.INFO
-// LogLevel.WARN
-// LogLevel.ERROR
-// LogLevel.NONE
 console({ level: LogLevel.WARN });
 
 // Won't be displayed:
@@ -129,6 +135,15 @@ console.timeLog("Scotty", "Beam us up, fast.");
 // [ LOG ] 2026-04-01T12:00:00.000Z
 // (string) Beam us up, fast.
 ```
+
+## Error handling
+
+`uhura` takes the approach of robust error checking while failing silently in
+case of an error:
+
+- Invalid settings are ignored when calling `console`.
+- Calling `console.time` with an already existing label will do nothing.
+- Calling `console.timeLog` or `console.timeEnd` with a non-existent label will do nothing.
 
 ## License
 

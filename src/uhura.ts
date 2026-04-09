@@ -140,7 +140,8 @@ console.error = (...args: unknown[]): void => handle(LogLevel.ERROR, ...args);
  * @returns void
  */
 console.time = (label: string): void => {
-    timers.set(label, Date.now());
+    const timer = timers.get(label);
+    if (!timer) timers.set(label, Date.now());
 };
 
 /**
@@ -268,9 +269,6 @@ function outputTimer(label: string, logs: any[] = []): void {
 
         try { config.callback!(LogLevel.TIMER, [label, duration].concat(logs)); }
         catch (error) { native.error(error); }
-    } else {
-        if (config.time)
-            native.warn(`${colors.bgGreen(colors.white(` TIMER `))} ${colors.gray(label)}`);
     }
 }
 
@@ -334,7 +332,7 @@ function serialize(obj: any): string {
 
         return colourised.join("\n");
     } catch (error) {
-        return String(error);
+        return String(obj);
     }
 }
 
