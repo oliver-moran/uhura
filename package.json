@@ -1,0 +1,47 @@
+{
+  "name": "uhura",
+  "version": "0.1.0",
+  "description": "A drop-in replacement for console designed for terminal output.",
+  "main": "dist/uhura.min.js",
+  "scripts": {
+    "build": "rm -rf dist && tsc && terser dist/uhura.js -o dist/uhura.min.js --source-map && rm dist/uhura.js dist/uhura.js.map",
+    "test": "node --experimental-vm-modules node_modules/.bin/jest",
+    "scratch": "node tests/scratch.js"
+  },
+  "type": "module",
+  "jest": {
+    "transform": {},
+    "testEnvironment": "node",
+    "silent": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oliver-moran/uhura.git"
+  },
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "console",
+    "logger",
+    "terminal"
+  ],
+  "author": "Oliver Moran <oliver.moran@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/oliver-moran/uhura/issues"
+  },
+  "homepage": "https://github.com/oliver-moran/uhura#readme",
+  "devDependencies": {
+    "@types/node": "^25.5.2",
+    "jest": "^30.3.0",
+    "jest-environment-node": "^30.3.0",
+    "terser": "^5.46.1",
+    "typescript": "^6.0.2"
+  },
+  "dependencies": {
+    "yoctocolors": "^2.1.2"
+  }
+}
