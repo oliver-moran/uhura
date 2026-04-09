@@ -12,11 +12,15 @@ import colors from 'yoctocolors';
 /**
  * Log levels for controlling the verbosity of logging and saving.
  * The levels are ordered from least to most severe, with Log being the least
- * severe and None being the most severe (no logging). You can adjust the
- * logLevel and saveLevel in the Settings object to control which messages are
- * logged and saved. For example, setting logLevel to LogLevel.WARN will only
- * log warnings and errors, while setting saveLevel to LogLevel.INFO will save
- * informational messages, warnings, and errors.
+ * severe and None being the most severe (no logging).
+ * 
+ * You can adjust the logLevel and saveLevel in the Settings object to control
+ * which messages are logged and saved. For example, setting logLevel to
+ * LogLevel.WARN will only log warnings and errors, while setting saveLevel to
+ * LogLevel.INFO will save informational messages, warnings, and errors.
+ * 
+ * The TIMER and COUNTER levels are special levels used for timer and counter
+ * logs, which can be enabled or disabled separately from the main log levels.
  */
 export enum LogLevel {
     LOG     = 0,
@@ -26,9 +30,25 @@ export enum LogLevel {
     ERROR   = 4,
     NONE    = 5, // No logging
     TIMER   = "TIMER", // Special level for timers
+    COUNTER = "COUNTER" // Special level for counters
 }
 
-const LEVELS_LABELS = ["LOG", "DEBUG", "INFO", "WARN", "ERROR", "OFF"] as const;
+/**
+ * Labels for log levels, used for formatting log messages. These labels are
+ * used in the output of log messages to indicate their level (e.g., "LOG",
+ * "DEBUG", "INFO", etc.). The labels are color-coded for better visibility in
+ * the console. You can customize these labels and their colors as needed.
+ */
+export const LogLabel = {
+    0: "LOG",
+    1: "DEBUG",
+    2: "INFO",
+    3: "WARN",
+    4: "ERROR",
+    5: "OFF",
+    "TIMER": "TIMER",
+    "COUNTER": "COUNTER"
+};
 
 /**
  * Settings for configuring the behavior of the custom console. You can set the
@@ -41,14 +61,16 @@ const LEVELS_LABELS = ["LOG", "DEBUG", "INFO", "WARN", "ERROR", "OFF"] as const;
  * @example
  * console({
  *   level: LogLevel.INFO,
- *   time: true,
+ *   time: false,
+ *   count: false,
  *   callback: (level, args) => {
- *     // Save logs to a database or external service here
+ *     // Custom logic to save logs to a database or external service
  *   }
  * });
  */
 export type UhuraSettings = {
     level?: LogLevel; // Minimum log level to log (default: LogLevel.LOG)
+    count?: boolean; // Enable or disable count logging (default: true)
     time?: boolean; // Enable or disable timer logging (default: true)
     trace?: boolean; // Enable or disable stack traces for errors (default: true)
     callback?: (level: LogLevel, args: unknown[]) => void; // Callback function for saving logs (default: no-op)
@@ -56,6 +78,7 @@ export type UhuraSettings = {
 
 const config: UhuraSettings = {
     level: LogLevel.LOG,
+    count: true,
     time: true,
     trace: true,
     callback: (level: LogLevel, args: unknown[]) => {
@@ -63,7 +86,9 @@ const config: UhuraSettings = {
     }
 };
 
-let timers = new Map<string, number>();
+const DEFAULT = "default";
+const timers = new Map<string, number>();
+const counters = new Map<string, number>();
 
 /**
  * Native console object for access to default behavior and methods.
@@ -77,12 +102,24 @@ export const native = globalThis.console;
  * log levels, formatting, and saving to a database. It also includes custom
  * implementations for time, timeLog, and timeEnd methods. All other console
  * methods default to the native console implementation.
+ * @param settings The settings to configure the behavior of the custom console.
+ * - level: The minimum log level to log (default: LogLevel.LOG).
+ * - count: Enable or disable count logging (default: true).
+ * - time: Enable or disable timer logging (default: true).
+ * - trace: Enable or disable stack traces for errors (default: true).
+ * - callback: A callback function that will be called with the log level and
+ *   arguments whenever a log method is called, allowing you to implement custom
+ *   logic for saving logs to a database or external service (default: no-op).
  * @returns The custom console object for chaining.
  * @example
+ * console({ level: LogLevel.INFO });
+ * console.log("This message is below the INFO level and won't be displayed.");
  */
 export function console(settings: UhuraSettings): Function {
     if (settings.level !== undefined && typeof settings.level === "number")
         config.level = settings.level;
+    if (settings.count !== undefined && typeof settings.count === "boolean")
+        config.count = settings.count;
     if (settings.time !== undefined && typeof settings.time === "boolean")
         config.time = settings.time;
     if (settings.trace !== undefined && typeof settings.trace === "boolean")
@@ -134,12 +171,38 @@ console.warn = (...args: unknown[]): void => handle(LogLevel.WARN, ...args);
 console.error = (...args: unknown[]): void => handle(LogLevel.ERROR, ...args);
 
 /**
- * Starts a timer with the given label.
- * If TIMERS is false, this will not log anything.
- * @param label The label for the timer.
+ * Logs the number of times this count has been called with the given label.
+ * If COUNTERS is false, this will not log anything.
+ * @param [label="default"] The label for the counter.
+ * @returns void 
+ */
+console.count = (label: string = DEFAULT): void => {
+    if (typeof label !== "string") label = DEFAULT;
+    const count = counters.get(label) || 0;
+    counters.set(label, count + 1);
+    outputCounter(label);
+};
+
+/**
+ * Resets the count for the given label to zero.
+ * If COUNTERS is false, this will not log anything.
+ * @param [label="default"] The label for the counter.
  * @returns void
  */
-console.time = (label: string): void => {
+console.countReset = (label: string = DEFAULT): void => {
+    if (typeof label !== "string") label = DEFAULT;
+    counters.delete(label);
+    outputCounter(label);
+};
+
+/**
+ * Starts a timer with the given label.
+ * If TIMERS is false, this will not log anything.
+ * @param [label="default"] The label for the timer.
+ * @returns void
+ */
+console.time = (label: string = DEFAULT): void => {
+    if (typeof label !== "string") label = DEFAULT;
     const timer = timers.get(label);
     if (!timer) timers.set(label, Date.now());
 };
@@ -147,21 +210,27 @@ console.time = (label: string): void => {
 /**
  * Logs the current value of the timer with the given label.
  * If TIMERS is false, this will not log anything.
- * @param label The label for the timer.
+ * @param [label="default"] The label for the timer.
  * @param args Additional arguments to log.
  * @return void
  */
-console.timeLog = (label: string, ...args: unknown[]): void => {
+console.timeLog = (label: string = DEFAULT, ...args: unknown[]): void => {
+    if (typeof label !== "string") {
+        args = [label, ...args]; // Shift "label" into args if it's not a string
+        label = DEFAULT;
+    }
+
     outputTimer(label, args);
 };
 
 /**
  * Ends a timer with the given label.
  * If TIMERS is false, this will not log anything.
- * @param label The label for the timer.
+ * @param [label="default"] The label for the timer.
  * @returns void
  */
-console.timeEnd = (label: string): void => {
+console.timeEnd = (label: string = DEFAULT): void => {
+    if (typeof label !== "string") label = DEFAULT;
     outputTimer(label);
     timers.delete(label);
 };
@@ -170,8 +239,6 @@ console.timeEnd = (label: string): void => {
 // default them to the native console implementation.
 console.assert = (condition: boolean, ...args: unknown[]) => native?.assert(condition, ...args);
 console.clear = () => native?.clear();
-console.count = (label?: string) => native?.count(label);
-console.countReset = (label?: string) => native?.countReset(label);
 console.dir = (item: unknown, options?: Record<string, unknown>) => native?.dir(item, options);
 console.dirxml = (item: unknown) => native?.dirxml(item);
 console.group = (...args: unknown[]) => native?.group(...args);
@@ -229,7 +296,7 @@ function format(args: unknown[], level:LogLevel = LogLevel.LOG): string {
     return `${label(level)} ${colors.gray(date)}\n${strs.join("\n")}`;
 
     function label(level: LogLevel): string {
-        const label = ` ${LEVELS_LABELS[level as number]} `;
+        const label = ` ${LogLabel[level]} `;
 
         switch (level) {
             case LogLevel.ERROR:
@@ -245,6 +312,16 @@ function format(args: unknown[], level:LogLevel = LogLevel.LOG): string {
                 return `${colors.bgGray(colors.whiteBright(label))}`;
         }
     }
+}
+
+function outputCounter(label: string): void {
+    const count = counters.get(label) || 0;
+    if (config.count && config.level !== LogLevel.NONE) {
+        native.log(`${colors.bgMagenta(colors.whiteBright(` COUNT `))} ${colors.magenta(String(count))} ${colors.gray(label)}`);
+    }
+
+    try { config.callback!(LogLevel.COUNTER, [label, count]); }
+    catch (error) { native.error(error); }
 }
 
 function outputTimer(label: string, logs: any[] = []): void {
