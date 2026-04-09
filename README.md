@@ -20,9 +20,9 @@ npm i @oliver.moran/uhura
 ```javascript
 import { console } from "uhura";
 
-console.log("Damn it, Jim, I'm a doctor, not a programmer.");
+console.log("Hailing frequencies open, sir.");
 // [ LOG ] 2026-04-01T12:00:00.000Z
-// (string) Damn it, Jim, I'm a doctor, not a programmer.
+// (string) Hailing frequencies open, sir.
 ```
 
 Objects passed to the console will be expanded:
