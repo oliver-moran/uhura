@@ -4,7 +4,13 @@ import { expect, jest } from '@jest/globals';
 describe('Native functionality', () => {
 
   beforeAll(() => {
-    console({ level: LogLevel.LOG, time: true, trace: true, callback: (level, args) => {} });
+    console({
+      level: LogLevel.LOG,
+      count: true,
+      time: true,
+      trace: true,
+      callback: (level, args) => {}
+    });
   });
 
   beforeEach(() => {

@@ -4,7 +4,13 @@ import { expect, jest } from '@jest/globals';
 describe('Timers', () => {
 
   beforeAll(() => {
-    console({ level: LogLevel.LOG, time: true, trace: true, callback: (level, args) => {} });
+    console({
+      level: LogLevel.LOG,
+      count: true,
+      time: true,
+      trace: true,
+      callback: (level, args) => {}
+    });
   });
 
   beforeEach(() => {
@@ -32,7 +38,7 @@ describe('Timers', () => {
     expect(log).toHaveBeenCalledWith(expect.stringContaining('testTimer'));
   });
 
-  test('When a timer does not exist, it warns of this', () => {
+  test('When a timer does not exist, it is not logged', () => {
     console.timeEnd('nonExistentTimer');
     expect(log).not.toHaveBeenCalled();
   });
