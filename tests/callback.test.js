@@ -58,4 +58,13 @@ describe('Native functionality', () => {
     expect(callbackMock).toHaveBeenCalledWith(LogLevel.TIMER, ['myTimer', expect.any(Number)]);
   });
 
+  test('Errors in callback do not affect logging', () => {
+    const callbackErrorMock = jest.fn(() => { throw new Error('Callback error'); });
+    console({ callback: callbackErrorMock });
+
+    expect(() => console.log('This should still log')).not.toThrow();
+    expect(callbackErrorMock).toHaveBeenCalledWith(LogLevel.LOG, ['This should still log']);
+    expect(error).toHaveBeenCalledWith(expect.any(Error));
+  });
+
 });
