@@ -4,7 +4,7 @@
   "description": "A drop-in replacement for console designed for terminal output.",
   "main": "dist/uhura.min.js",
   "scripts": {
-    "build": "rm -rf dist && tsc && terser dist/uhura.js -o dist/uhura.min.js --source-map && rm dist/uhura.js dist/uhura.js.map",
+    "build": "rm -rf dist && tsc && terser dist/uhura.js -o dist/uhura.min.js --source-map url='uhura.min.js.map' && rm dist/uhura.js dist/uhura.js.map && mv dist/uhura.d.ts dist/uhura.min.d.ts",
     "test": "node --experimental-vm-modules node_modules/.bin/jest",
     "scratch": "node tests/scratch.js"
   },
