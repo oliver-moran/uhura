@@ -1,3 +1,5 @@
+![Uhura, "Hailing frequencies open, sir."](https://oliver-moran.github.io/uhura/assets/uhura-256.webp)
+
 `uhura` is a drop-in replacement for the native `console` in JavaScript and
 TypeScript projects.
 
@@ -89,7 +91,7 @@ console.time("Warp engines online");
 console.timeEnd("Warp engines online");
 ```
 
-And so can stack tracing on errors:
+And stack tracing on errors:
 
 ```javascript
 console({ trace: false });
