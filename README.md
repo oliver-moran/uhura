@@ -1,4 +1,4 @@
-![Uhura, "Hailing frequencies open, sir."](https://oliver-moran.github.io/uhura/assets/uhura-256.webp)
+![Uhura, "Hailing frequencies open, sir."](https://github.com/oliver-moran/uhura/blob/main/assets/ubura.webp)
 
 `uhura` is a drop-in replacement for the native `console` in JavaScript and
 TypeScript projects.
