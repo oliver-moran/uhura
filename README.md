@@ -53,7 +53,7 @@ console.log(quote);
 - `LogLevel.NONE` (disables all logging)
 
 Additionally, there are a special logging levels, `LogLevel.TIMER` and
-`LogLevel.Counter`, that operate independently of this hierarchy.
+`LogLevel.COUNTER`, that operate independently of this hierarchy.
 
 ```javascript
 import { console, native, LogLevel } from "@oliver.moran/uhura";
@@ -144,6 +144,8 @@ console.warn("I'm a doctor, not a mechanic.");
 // [ WARN ] 2026-04-01T12:00:00.000Z
 // (string) I'm a doctor, not a mechanic.
 
+console.count("Klingons");
+
 console.time("Scotty");
 console.timeLog("Scotty", "Beam us up, fast.");
 // [ TIMER ] 0ms Scotty
@@ -164,7 +166,7 @@ native console's error method.
 - Calling `console.time` with an already existing label will do nothing.
 - Calling `console.timeLog` or `console.timeEnd` with a non-existent label will
 do nothing.
-- Calling `console.countReset` with a non-existing label will do nothing.
+- Calling `console.countReset` with a non-existent label will do nothing.
 
 ## License
 
