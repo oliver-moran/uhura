@@ -361,9 +361,10 @@ function substitute(str: string, args: unknown[]): unknown[] {
 }
 
 function outputCounter(label: string): void {
+    const date = new Date().toISOString();
     const count = counters.get(label) || 0;
     if (config.count && config.level !== LogLevel.NONE) {
-        native.log(`${colors.bgMagenta(colors.whiteBright(` COUNT `))} ${colors.magenta(String(count))} ${colors.gray(label)}`);
+        native.log(`${colors.bgMagenta(colors.whiteBright(` ${LogLabel[LogLevel.COUNTER]} `))} ${colors.magenta(String(count))} ${colors.gray(label)} ${colors.gray(date)}`);
     }
 
     try { config.callback!(LogLevel.COUNTER, [label, count]); }
@@ -371,6 +372,7 @@ function outputCounter(label: string): void {
 }
 
 function outputTimer(label: string, logs: unknown[] = []): void {
+    const date = new Date().toISOString();
     const start = timers.get(label);
     if (start !== undefined) {
         const duration = Date.now() - start;
@@ -378,12 +380,11 @@ function outputTimer(label: string, logs: unknown[] = []): void {
         const days = Math.floor(duration / (24 * 60 * 60 * 1000));
         const hours = Math.floor((duration % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
         const minutes = Math.floor((duration % (60 * 60 * 1000)) / (60 * 1000));
-        const seconds = Math.floor((duration % (60 * 1000)) / 1000);
-        const milliseconds = duration % 1000;
+        const seconds = (duration % (60 * 1000)) / 1000;
 
-        const str = `${days > 0 ? `${days}d ` : ""}${hours > 0 ? `${hours}h ` : ""}${minutes > 0 ? `${minutes}m ` : ""}${seconds > 0 ? `${seconds}s ` : ""}${milliseconds}ms`;
+        const str = `${days > 0 ? `${days}d ` : ""}${hours > 0 ? `${hours}h ` : ""}${minutes > 0 ? `${minutes}m ` : ""}${seconds.toFixed(3)}s`;
         if (config.time && config.level !== LogLevel.NONE) {
-            native.log(`${colors.bgGreen(colors.whiteBright(` TIMER `))} ${colors.green(str)} ${colors.gray(label)}`);
+            native.log(`${colors.bgGreen(colors.whiteBright(` ${LogLabel[LogLevel.TIMER]} `))} ${colors.green(str)} ${colors.gray(label)} ${colors.gray(date)}`);
             (logs || []).forEach(log => {
                 const str = format(logs, LogLevel.LOG);
                 native.log(str)
