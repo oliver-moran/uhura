@@ -130,7 +130,8 @@ function callback(level, args) {
 
     if (level === LogLevel.COUNT) {
         const [label, count] = args;
-        native.log("%s: %i", label, count)
+        native.log(label, count)
+        // Klingons 1
     }
 
     if (level === LogLevel.TIME) {
@@ -143,7 +144,7 @@ function callback(level, args) {
     }
 };
 
-console({ time: true, callback: callback });
+console({ callback: callback });
 
 console.warn("I'm a doctor, not a mechanic.");
 // [ WARN ] 2026-04-01T12:00:00.000Z
@@ -154,7 +155,7 @@ console.count("Klingons");
 
 console.time("Scotty");
 console.timeLog("Scotty", "Beam us up, fast.");
-// [ TIME ] 0ms Scotty 2026-04-01T12:00:00.000Z
+// [ TIME ] 0.000s Scotty 2026-04-01T12:00:00.000Z
 // [ LOG ] 2026-04-01T12:00:00.000Z
 // (string) Beam us up, fast.
 ```
