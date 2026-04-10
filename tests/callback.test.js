@@ -58,10 +58,24 @@ describe('Native functionality', () => {
     expect(callbackMock).not.toHaveBeenCalled();
 
     console.timeLog('myTimer', 'Halfway there...');
-    expect(callbackMock).toHaveBeenCalledWith(LogLevel.TIMER, ['myTimer', expect.any(Number), 'Halfway there...']);
+    expect(callbackMock).toHaveBeenCalledWith(LogLevel.TIME, ['myTimer', expect.any(Number), 'Halfway there...']);
 
     console.timeEnd('myTimer');
-    expect(callbackMock).toHaveBeenCalledWith(LogLevel.TIMER, ['myTimer', expect.any(Number)]);
+    expect(callbackMock).toHaveBeenCalledWith(LogLevel.TIME, ['myTimer', expect.any(Number)]);
+  });
+
+  test('Callback function is called for counters', () => {
+    const callbackMock = jest.fn();
+    console({ callback: callbackMock });
+
+    console.count('myCounter');
+    expect(callbackMock).toHaveBeenCalledWith(LogLevel.COUNT, ['myCounter', 1]);
+
+    console.count('myCounter');
+    expect(callbackMock).toHaveBeenCalledWith(LogLevel.COUNT, ['myCounter', 2]);
+
+    console.countReset('myCounter');
+    expect(callbackMock).toHaveBeenCalledWith(LogLevel.COUNT, ['myCounter', 0]);
   });
 
   test('Errors in callback do not affect logging', () => {

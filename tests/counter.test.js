@@ -24,22 +24,22 @@ describe('Counters', () => {
   test('When a counter is created, it counts correctly', () => {
     console({ count: true, level: LogLevel.LOG });
     console.count('testCounter');
-    expect(log).toHaveBeenCalledWith(expect.stringContaining(LogLevel[LogLevel.COUNTER]));
+    expect(log).toHaveBeenCalledWith(expect.stringContaining(LogLevel[LogLevel.COUNT]));
     expect(log).toHaveBeenCalledWith(expect.stringContaining('testCounter'));
     expect(log).toHaveBeenCalledWith(expect.stringContaining('1'));
 
     console.count('testCounter');
-    expect(log).toHaveBeenCalledWith(expect.stringContaining(LogLevel[LogLevel.COUNTER]));
+    expect(log).toHaveBeenCalledWith(expect.stringContaining(LogLevel[LogLevel.COUNT]));
     expect(log).toHaveBeenCalledWith(expect.stringContaining('testCounter'));
     expect(log).toHaveBeenCalledWith(expect.stringContaining('2'));
 
     console.countReset('testCounter');
-    expect(log).toHaveBeenCalledWith(expect.stringContaining(LogLevel[LogLevel.COUNTER]));
+    expect(log).toHaveBeenCalledWith(expect.stringContaining(LogLevel[LogLevel.COUNT]));
     expect(log).toHaveBeenCalledWith(expect.stringContaining('testCounter'));
     expect(log).toHaveBeenCalledWith(expect.stringContaining('0'));
 
     console.count('testCounter');
-    expect(log).toHaveBeenCalledWith(expect.stringContaining(LogLevel[LogLevel.COUNTER]));
+    expect(log).toHaveBeenCalledWith(expect.stringContaining(LogLevel[LogLevel.COUNT]));
     expect(log).toHaveBeenCalledWith(expect.stringContaining('testCounter'));
     expect(log).toHaveBeenCalledWith(expect.stringContaining('1'));
   });

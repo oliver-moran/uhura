@@ -52,8 +52,8 @@ console.log(quote);
 - `LogLevel.ERROR`
 - `LogLevel.NONE` (disables all logging)
 
-Additionally, there are a special logging levels, `LogLevel.TIMER` and
-`LogLevel.COUNTER`, that operate independently of this hierarchy.
+Additionally, there are a special logging levels, `LogLevel.TIME` and
+`LogLevel.COUNT`, that operate independently of this hierarchy.
 
 ```javascript
 import { console, native, LogLevel } from "@oliver.moran/uhura";
@@ -128,7 +128,12 @@ function callback(level, args) {
         // WARN I'm a doctor, not a mechanic.
     }
 
-    if (level === LogLevel.TIMER) {
+    if (level === LogLevel.COUNT) {
+        const [label, count] = args;
+        native.log("%s: %i", label, count)
+    }
+
+    if (level === LogLevel.TIME) {
         const [label, ms, ...logs] = args;
 
         native.log(...logs);
@@ -145,10 +150,11 @@ console.warn("I'm a doctor, not a mechanic.");
 // (string) I'm a doctor, not a mechanic.
 
 console.count("Klingons");
+// [ COUNT ] 1 Klingons 2026-04-01T12:00:00.000Z
 
 console.time("Scotty");
 console.timeLog("Scotty", "Beam us up, fast.");
-// [ TIMER ] 0ms Scotty
+// [ TIME ] 0ms Scotty 2026-04-01T12:00:00.000Z
 // [ LOG ] 2026-04-01T12:00:00.000Z
 // (string) Beam us up, fast.
 ```

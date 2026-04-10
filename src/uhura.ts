@@ -29,8 +29,8 @@ export enum LogLevel {
     WARN    = 3,
     ERROR   = 4,
     NONE    = 5, // No logging
-    TIMER   = "TIMER", // Special level for timers
-    COUNTER = "COUNTER" // Special level for counters
+    TIME    = "TIME", // Special level for timers
+    COUNT   = "COUNT" // Special level for counters
 }
 
 /**
@@ -46,8 +46,8 @@ export const LogLabel = {
     3: "WARN",
     4: "ERROR",
     5: "OFF",
-    "TIMER": "TIMER",
-    "COUNTER": "COUNTER"
+    "TIME": "TIME",
+    "COUNT": "COUNT"
 };
 
 /**
@@ -364,10 +364,10 @@ function outputCounter(label: string): void {
     const date = new Date().toISOString();
     const count = counters.get(label) || 0;
     if (config.count && config.level !== LogLevel.NONE) {
-        native.log(`${colors.bgMagenta(colors.whiteBright(` ${LogLabel[LogLevel.COUNTER]} `))} ${colors.magenta(String(count))} ${colors.gray(label)} ${colors.gray(date)}`);
+        native.log(`${colors.bgMagenta(colors.whiteBright(` ${LogLabel[LogLevel.COUNT]} `))} ${colors.magenta(String(count))} ${colors.gray(label)} ${colors.gray(date)}`);
     }
 
-    try { config.callback!(LogLevel.COUNTER, [label, count]); }
+    try { config.callback!(LogLevel.COUNT, [label, count]); }
     catch (error) { native.error(error); }
 }
 
@@ -384,14 +384,14 @@ function outputTimer(label: string, logs: unknown[] = []): void {
 
         const str = `${days > 0 ? `${days}d ` : ""}${hours > 0 ? `${hours}h ` : ""}${minutes > 0 ? `${minutes}m ` : ""}${seconds.toFixed(3)}s`;
         if (config.time && config.level !== LogLevel.NONE) {
-            native.log(`${colors.bgGreen(colors.whiteBright(` ${LogLabel[LogLevel.TIMER]} `))} ${colors.green(str)} ${colors.gray(label)} ${colors.gray(date)}`);
+            native.log(`${colors.bgGreen(colors.whiteBright(` ${LogLabel[LogLevel.TIME]} `))} ${colors.green(str)} ${colors.gray(label)} ${colors.gray(date)}`);
             (logs || []).forEach(log => {
                 const str = format(logs, LogLevel.LOG);
                 native.log(str)
             });
         }
 
-        try { config.callback!(LogLevel.TIMER, [label, duration].concat(logs as [])); }
+        try { config.callback!(LogLevel.TIME, [label, duration].concat(logs as [])); }
         catch (error) { native.error(error); }
     }
 }

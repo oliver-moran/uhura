@@ -40,8 +40,8 @@ describe('Logging levels', () => {
     expect(LogLabel[LogLevel.INFO]).toBe('INFO');
     expect(LogLabel[LogLevel.WARN]).toBe('WARN');
     expect(LogLabel[LogLevel.ERROR]).toBe('ERROR');
-    expect(LogLabel[LogLevel.COUNTER]).toBe('COUNTER');
-    expect(LogLabel[LogLevel.TIMER]).toBe('TIMER');        
+    expect(LogLabel[LogLevel.COUNT]).toBe('COUNT');
+    expect(LogLabel[LogLevel.TIME]).toBe('TIME');        
   });
 
   test('Console logs messages with correct formatting', () => {

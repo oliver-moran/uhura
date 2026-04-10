@@ -29,12 +29,12 @@ describe('Timers', () => {
     expect(log).not.toHaveBeenCalled();
 
     console.timeLog('testTimer', 'Halfway there...');
-    expect(log).toHaveBeenCalledWith(expect.stringContaining(LogLevel[LogLevel.TIMER]));
+    expect(log).toHaveBeenCalledWith(expect.stringContaining(LogLevel[LogLevel.TIME]));
     expect(log).toHaveBeenCalledWith(expect.stringContaining('testTimer'));
     expect(log).toHaveBeenCalledWith(expect.stringContaining('Halfway there...'));
 
     console.timeEnd('testTimer');
-    expect(log).toHaveBeenCalledWith(expect.stringContaining(LogLevel[LogLevel.TIMER]));
+    expect(log).toHaveBeenCalledWith(expect.stringContaining(LogLevel[LogLevel.TIME]));
     expect(log).toHaveBeenCalledWith(expect.stringContaining('testTimer'));
   });
 
