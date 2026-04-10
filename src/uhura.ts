@@ -303,6 +303,10 @@ function handle(level: LogLevel, ...args: unknown[]):void {
  */
 function format(args: unknown[], level:LogLevel = LogLevel.LOG): string {
     const date = new Date().toISOString();
+    
+    if (typeof args[0] === "string")
+        args = substitute(String(args[0]), args.slice(1));
+
     const strs = prepareOutput(args);
 
     return `${label(level)} ${colors.gray(date)}\n${strs.join("\n")}`;
@@ -326,6 +330,36 @@ function format(args: unknown[], level:LogLevel = LogLevel.LOG): string {
     }
 }
 
+function substitute(str: string, args: unknown[]): unknown[] {
+    const specifiers = /%[oOdisf]/g;
+    const remaining = [...args];
+
+    const result = str.replace(specifiers, (specifier) => {
+        if (remaining.length === 0) {
+            return specifier; // No more arguments to substitute
+        }
+
+        const arg = remaining.shift();
+        switch (specifier) {
+            case '%o': // Substitute as an object ("optimally useful formatting")
+                return serialize(arg, false);
+            case '%O': // Substitute as an object ("generic JavaScript object formatting")
+                return serialize(arg, true);
+            case '%d':
+            case '%i': // Substitute as an integer
+                return typeof arg === 'number' ? Math.floor(arg).toString() : "NaN";
+            case '%s': // Substitute as a string
+                return String(arg);
+            case '%f': // Substitute as a floating-point value
+                return typeof arg === 'number' ? arg.toFixed(6).toString() : "NaN";
+            default:
+                return specifier; // Unknown specifier, return as is
+        }
+    });
+
+    return [result, ...remaining];
+}
+
 function outputCounter(label: string): void {
     const count = counters.get(label) || 0;
     if (config.count && config.level !== LogLevel.NONE) {
@@ -336,7 +370,7 @@ function outputCounter(label: string): void {
     catch (error) { native.error(error); }
 }
 
-function outputTimer(label: string, logs: any[] = []): void {
+function outputTimer(label: string, logs: unknown[] = []): void {
     const start = timers.get(label);
     if (start !== undefined) {
         const duration = Date.now() - start;
@@ -356,7 +390,7 @@ function outputTimer(label: string, logs: any[] = []): void {
             });
         }
 
-        try { config.callback!(LogLevel.TIMER, [label, duration].concat(logs)); }
+        try { config.callback!(LogLevel.TIMER, [label, duration].concat(logs as [])); }
         catch (error) { native.error(error); }
     }
 }
@@ -390,7 +424,7 @@ function colourize(value: unknown): string {
     return `${colors.blue(String(value))}`; // Other types
 }
 
-function serialize(obj: any): string {
+function serialize(obj: any, format: boolean = true): string {
     try {
         const json = JSON.stringify(obj, (key, value) => {
             if (["string", "number", "boolean"].includes(typeof value) || value === null) return value;
@@ -400,7 +434,9 @@ function serialize(obj: any): string {
             else if (Array.isArray(value)) return value;
             // Anything else (e.g. functions, symbols, BigInts)
             else return String(value);
-        }, 2);
+        }, format ? 2 : undefined); // Indent with 2 spaces for pretty formatting, or no spaces for single-line
+
+        if (!format) return json; // Remove newlines for single-line output
         
         const colourised:string[] = [];
         for (let line of json.split("\n")) {
