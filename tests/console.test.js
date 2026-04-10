@@ -67,6 +67,16 @@ describe('Logging levels', () => {
     expect(error).toHaveBeenCalledWith(expect.stringContaining(LogLabel[LogLevel.ERROR]));
     expect(error).toHaveBeenCalledWith(expect.stringContaining('Formatted message'));
   });
+
+  test('Assert logs an error when the condition is false, and not when true', () => {
+    console({ level: LogLevel.ERROR });
+    console.assert(false, 'Assertion failed');
+    expect(error).toHaveBeenCalledWith(expect.stringContaining(LogLabel[LogLevel.ERROR]));
+    expect(error).toHaveBeenCalledWith(expect.stringContaining('Assertion failed'));
+
+    console.assert(true, 'This should not be logged');
+    expect(error).not.toHaveBeenCalledWith(expect.stringContaining('This should not be logged'));
+  });
   
   test('Logs messages at the correct log level', () => {
     console({ level: LogLevel.DEBUG });

@@ -171,6 +171,16 @@ console.warn = (...args: unknown[]): void => handle(LogLevel.WARN, ...args);
 console.error = (...args: unknown[]): void => handle(LogLevel.ERROR, ...args);
 
 /**
+ * Logs an assertion failure as an error to the console. Accepts the same
+ * overloading as the default console.assert.
+ * @param condition The condition to test.
+ * @param args The arguments to log if the assertion fails.
+ */
+console.assert = (condition: boolean, ...args: unknown[]): void => {
+    if (!condition) console.error(...args);
+}
+
+/**
  * Logs the number of times this count has been called with the given label.
  * If COUNTERS is false, this will not log anything.
  * @param [label="default"] The label for the counter.
@@ -240,7 +250,6 @@ console.timeEnd = (label: string = DEFAULT): void => {
 
 // List the other console methods here that are not implemented in uhura, and
 // default them to the native console implementation.
-console.assert = (condition: boolean, ...args: unknown[]) => native?.assert(condition, ...args);
 console.clear = () => native?.clear();
 console.dir = (item: unknown, options?: Record<string, unknown>) => native?.dir(item, options);
 console.dirxml = (item: unknown) => native?.dirxml(item);
