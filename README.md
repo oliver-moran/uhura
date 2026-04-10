@@ -18,7 +18,7 @@ npm i @oliver.moran/uhura
 ```
 
 ```javascript
-import { console } from "uhura";
+import { console } from "@oliver.moran/uhura";
 
 console.log("Hailing frequencies open, sir.");
 // [ LOG ] 2026-04-01T12:00:00.000Z
@@ -56,7 +56,7 @@ Additionally, there are a special logging levels, `LogLevel.TIMER` and
 `LogLevel.Counter`, that operate independently of this hierarchy.
 
 ```javascript
-import { console, native, LogLevel } from "uhura";
+import { console, native, LogLevel } from "@oliver.moran/uhura";
 
 console({ level: LogLevel.WARN });
 
@@ -114,7 +114,7 @@ You can define a custom callback function that is executed after every console
 event:
 
 ```javascript
-import { console, native, LogLevel, LogLabel } from "uhura";
+import { console, native, LogLevel, LogLabel } from "@oliver.moran/uhura";
 
 function callback(level, args) {
     // Careful: Use the native console in the callback function. Otherwise,
