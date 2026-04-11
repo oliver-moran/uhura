@@ -255,6 +255,15 @@ console.dir = (item: unknown, options: DirOptions = DirDefaults): void => {
 }
 
 /**
+ * Functionally identical to console.log, except it accepts a single argument.
+ * @param item The item to log.
+ */
+console.dirxml = (item: unknown): void => {
+    // FIXME: This is a very basic implementation
+    console.log(item);
+}
+
+/**
  * Logs a table to the console. If the log level is higher than LOG, this will
  * not log anything.
  * @param data The data to log as a table.
@@ -370,10 +379,6 @@ console.clear = (): void => native?.clear();
 console.group = (...args: unknown[]): void => native?.group(...args);
 console.groupCollapsed = (...args: unknown[]): void => native?.groupCollapsed(...args);
 console.groupEnd = (): void => native?.groupEnd();
-
-// These methods will require custom handling but are not implemented yet, so
-// we'll just delegate to the native console for now.
-console.dirxml = (item: unknown) => native?.dirxml(item);
 
 Object.freeze(console); // Prevent modification of custom console
 
