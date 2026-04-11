@@ -6,9 +6,6 @@ TypeScript projects.
 It enhances the native `console` with improved formatting and a callback
 function, especially useful in terminal environments.
 
-Standard console methods not implemented by `uhura` fall back to the native
-console, which is always available.
-
 ## Basic usage
 
 Install `uhura` via npm:
