@@ -72,6 +72,15 @@ describe('Callback functionality', () => {
     console.dir(obj);
     expect(callbackMock).toHaveBeenCalledWith(LogLevel.LOG, ['Test Object', 42]);
   });
+
+  test('Callback function is called for dirxml', () => {
+    const callbackMock = jest.fn();
+    console({ callback: callbackMock });
+
+    const obj = { name: 'Test Object', value: 42 };
+    console.dirxml(obj);
+    expect(callbackMock).toHaveBeenCalledWith(LogLevel.LOG, [{ name: 'Test Object', value: 42 }]);
+  });
   
   test('Callback function is called for tables', () => {
     const callbackMock = jest.fn();
