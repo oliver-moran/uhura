@@ -95,7 +95,7 @@ const counters = new Map<string, number>();
  * @example
  * native.log("This will use the native console.log, bypassing the uhura.");
  */
-export const native = globalThis.console;
+export const native = globalThis?.console;
 
 /**
  * Custom console object that overrides the default console methods to include
@@ -224,8 +224,6 @@ console.table = (data: Iterable<unknown> = [], columns?: string[] | number[]): v
         columns = columns.map(col => String(col));
     } else if (typeof columns !== "undefined") columns = [String(columns)];
 
-    native.log(columns);
-
     if (config.level! as number <= LogLevel.LOG) {
         const str = format(LogLevel.LOG);
         native?.log(str);
@@ -345,19 +343,19 @@ function handle(level: LogLevel, ...args: unknown[]):void {
         const str = format(level, args);
         switch (level) {
             case LogLevel.LOG:
-                native.log(str);
+                native?.log(str);
                 break;
             case LogLevel.DEBUG:
-                native.debug(str);
+                native?.debug(str);
                 break;
             case LogLevel.INFO:
-                native.info(str);
+                native?.info(str);
                 break;
             case LogLevel.WARN:
-                native.warn(str);
+                native?.warn(str);
                 break;
             case LogLevel.ERROR:
-                native.error(str);
+                native?.error(str);
                 break;
             default:
                 // Do nothing for LogLevel.NONE
@@ -370,7 +368,7 @@ function handle(level: LogLevel, ...args: unknown[]):void {
 
 function callback(level: LogLevel, args: Iterable<unknown>): void {
     try { config.callback!(level, args); }
-    catch (error) { native.error(error); }
+    catch (error) { native?.error(error); }
 }
 
 /**
@@ -442,7 +440,7 @@ function counter(label: string): void {
     const date = new Date().toISOString();
     const count = counters.get(label) || 0;
     if (config.count && config.level !== LogLevel.NONE) {
-        native.log(`${colors.bgMagenta(colors.whiteBright(` ${LogLabel[LogLevel.COUNT]} `))} ${colors.magenta(String(count))} ${colors.gray(label)} ${colors.gray(date)}`);
+        native?.log(`${colors.bgMagenta(colors.whiteBright(` ${LogLabel[LogLevel.COUNT]} `))} ${colors.magenta(String(count))} ${colors.gray(label)} ${colors.gray(date)}`);
     }
 
     callback(LogLevel.COUNT, [label, count]);
@@ -461,10 +459,10 @@ function timer(label: string, logs: unknown[] = []): void {
 
         const str = `${days > 0 ? `${days}d ` : ""}${hours > 0 ? `${hours}h ` : ""}${minutes > 0 ? `${minutes}m ` : ""}${seconds.toFixed(3)}s`;
         if (config.time && config.level !== LogLevel.NONE) {
-            native.log(`${colors.bgGreen(colors.whiteBright(` ${LogLabel[LogLevel.TIME]} `))} ${colors.green(str)} ${colors.gray(label)} ${colors.gray(date)}`);
+            native?.log(`${colors.bgGreen(colors.whiteBright(` ${LogLabel[LogLevel.TIME]} `))} ${colors.green(str)} ${colors.gray(label)} ${colors.gray(date)}`);
             (logs || []).forEach(log => {
                 const str = format(LogLevel.LOG, logs);
-                native.log(str)
+                native?.log(str)
             });
         }
 
