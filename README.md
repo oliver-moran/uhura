@@ -179,6 +179,8 @@ case of an error:
 Object]`).
 - Uncaught exceptions in callback functions are caught and logged using the
 native console's error method.
+- If `console.table` is called with improper arguments, `uhura` will attempt to
+correct them automatically.
 - Calling `console.time` with an already existing label will do nothing.
 - Calling `console.timeLog` or `console.timeEnd` with a non-existent label will
 do nothing.
