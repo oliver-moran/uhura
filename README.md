@@ -28,12 +28,12 @@ console.log("Hailing frequencies open, sir.");
 Objects passed to the console will be expanded:
 
 ```javascript
-const quote = {
+const object = {
     Stardate: 1312.4,
     Kelso: "Object is now within tractor beam range.",
 }
 
-console.log(quote);
+console.log(object);
 // [ LOG ] 2026-04-01T12:00:00.000Z
 // (object) {
 //   "Stardate": 1312.4,
@@ -54,6 +54,9 @@ console.log(quote);
 
 Additionally, there are a special logging levels, `LogLevel.TIME` and
 `LogLevel.COUNT`, that operate independently of this hierarchy.
+
+Note: The methods `console.table` and `console.trace` are logged at the levels
+of `LogLevel.LOG` and `LogLevel.DEBUG`, respectively.
 
 ```javascript
 import { console, native, LogLevel } from "@oliver.moran/uhura";
@@ -94,7 +97,7 @@ console.count("...to beam up.");
 console.countReset("...to beam up.");
 ```
 
-And stack tracing on errors:
+And stack tracing of `Error` objects and for `console.trace`:
 
 ```javascript
 console({ trace: false });
@@ -107,6 +110,9 @@ try {
     // (error) KHAAANNN!
 }
 ```
+
+Note: Stack traces will always be sent to the `callback` function, where they
+can be handled manually.
 
 ## Callback function
 
@@ -159,6 +165,9 @@ console.timeLog("Scotty", "Beam us up, fast.");
 // [ LOG ] 2026-04-01T12:00:00.000Z
 // (string) Beam us up, fast.
 ```
+
+Note: When a `callback` method is set, it will always be invoked, regardless of
+the general logging settings.
 
 ## Error handling
 
