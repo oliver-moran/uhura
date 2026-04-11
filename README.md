@@ -18,7 +18,7 @@ npm i @oliver.moran/uhura
 ```
 
 ```javascript
-import { console } from "@oliver.moran/uhura";
+import console from "@oliver.moran/uhura";
 
 console.log("Hailing frequencies open, sir.");
 // [ LOG ] 2026-04-01T12:00:00.000Z
@@ -55,8 +55,8 @@ console.log(object);
 Additionally, there are a special logging levels, `LogLevel.TIME` and
 `LogLevel.COUNT`, that operate independently of this hierarchy.
 
-Note: The methods `console.table` and `console.trace` are logged at the levels
-of `LogLevel.LOG` and `LogLevel.DEBUG`, respectively.
+Note: The methods `console.dir` and `console.table` are logged at the level
+of `LogLevel.LOG` and `console.trace` at `LogLevel.DEBUG`.
 
 ```javascript
 import { console, native, LogLevel } from "@oliver.moran/uhura";
@@ -117,7 +117,7 @@ can be handled manually.
 ## Callback function
 
 You can define a custom callback function that is executed after every console
-event:
+output event:
 
 ```javascript
 import { console, native, LogLevel, LogLabel } from "@oliver.moran/uhura";
