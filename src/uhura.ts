@@ -23,14 +23,14 @@ import colors from 'yoctocolors';
  * logs, which can be enabled or disabled separately from the main log levels.
  */
 export enum LogLevel {
-    LOG     = 0,
+    LOG     = 0, // Log everything (default)
     DEBUG   = 1,
     INFO    = 2,
     WARN    = 3,
     ERROR   = 4,
     NONE    = 5, // No logging
     TIME    = "TIME", // Special level for timers
-    COUNT   = "COUNT" // Special level for counters
+    COUNT   = "COUNT", // Special level for counters
 }
 
 /**
@@ -84,6 +84,23 @@ const config: UhuraSettings = {
     callback: (level: LogLevel, args: Iterable<unknown>) => {
         // Implement your custom logic here
     }
+};
+
+interface DirOptions {
+    colors?: boolean; // Apply color formatting to the output (default: true)
+    showHidden?: boolean; // Include non-enumerable properties (default: false)
+}
+
+const DirDefaults = { colors: true, showHidden: false }
+
+interface SerializerOptions {
+    multiline?: boolean; // Pretty format JSON output (default: true)
+    colourize?: boolean; // Color format JSON output (default: true)
+}
+
+const SerializerDefaults = {
+    multiline: true,
+    colourize: true,
 };
 
 const DEFAULT = "default";
@@ -209,6 +226,35 @@ console.countReset = (label: string = DEFAULT): void => {
 };
 
 /**
+ * Logs an listing of the properties of the specified JavaScript object. If the
+ * log level is higher than LOG, this will not log anything.
+ * @param item 
+ * @param options 
+ */
+console.dir = (item: unknown, options: DirOptions = DirDefaults): void => {
+    options = { ...DirDefaults, ...options };
+
+    const label = format(LogLevel.LOG);
+    const output = [];
+    const props = [];
+
+    const keys = options?.showHidden ? Object.getOwnPropertyNames(item as object) : Object.keys(item as object);
+    const enumerables = Object.keys(item as object); // Only includes enumerable properties
+
+    for (const key of keys) {
+        const prop = (item as Record<string, unknown>)[key];
+        const type = typeof2(prop);
+        const str = `${colors.gray(`(${type})`)} ${colors.gray(`${key}`)} ${serialize(prop, { multiline: false, colourize: options?.colors })}`;
+        if (enumerables.includes(key)) output.push(str);
+        else output.push(`${colors.dim(str)}`);
+        props.push(prop);
+    }
+    if (config.level! as number <= LogLevel.LOG)
+        native.log(`${label}\n${output.join("\n")}`.trim());
+    callback(LogLevel.LOG, props);
+}
+
+/**
  * Logs a table to the console. If the log level is higher than LOG, this will
  * not log anything.
  * @param data The data to log as a table.
@@ -221,8 +267,8 @@ console.table = (data: Iterable<unknown> = [], columns?: string[] | number[]): v
 
     // Ensure columns are strings
     if (Array.isArray(columns)) {
-        columns = columns.map(col => String(col));
-    } else if (typeof columns !== "undefined") columns = [String(columns)];
+        columns = columns.map(col => string(col));
+    } else if (typeof columns !== "undefined") columns = [string(columns)];
 
     if (config.level! as number <= LogLevel.LOG) {
         const str = format(LogLevel.LOG);
@@ -268,8 +314,7 @@ console.table = (data: Iterable<unknown> = [], columns?: string[] | number[]): v
  * @param args The arguments to log.
  */
 console.trace = (...args: unknown[]): void => {
-    const date = new Date().toISOString();
-    const label = `${colors.bgBlue(colors.whiteBright(` ${LogLabel[LogLevel.DEBUG]} `))} ${colors.gray(date)}`;
+    const label = format(LogLevel.DEBUG);
     const output = prepareOutput(args);
     const stack = (new Error().stack || "").split('\n').splice(2).join('\n');
     const str = `${label}\n${output.length ? `${output.join("\n")}\n` : ""}${(config.trace) ? `${colors.gray(stack)}` : ""}`;
@@ -328,7 +373,6 @@ console.groupEnd = (): void => native?.groupEnd();
 
 // These methods will require custom handling but are not implemented yet, so
 // we'll just delegate to the native console for now.
-console.dir = (item: unknown, options?: Record<string, unknown>) => native?.dir(item, options);
 console.dirxml = (item: unknown) => native?.dirxml(item);
 
 Object.freeze(console); // Prevent modification of custom console
@@ -381,7 +425,7 @@ function format(level:LogLevel = LogLevel.LOG, args: unknown[] = []): string {
     const date = new Date().toISOString();
     
     if (typeof args[0] === "string")
-        args = substitute(String(args[0]), args.slice(1));
+        args = substitute(string(args[0]), args.slice(1));
 
     const strs = prepareOutput(args);
 
@@ -418,14 +462,14 @@ function substitute(str: string, args: unknown[]): unknown[] {
         const arg = remaining.shift();
         switch (specifier) {
             case '%o': // Substitute as an object ("optimally useful formatting")
-                return serialize(arg, false);
+                return serialize(arg, {multiline: false, colourize: false});
             case '%O': // Substitute as an object ("generic JavaScript object formatting")
-                return serialize(arg, true);
+                return serialize(arg, {multiline: true, colourize: true});
             case '%d':
             case '%i': // Substitute as an integer
                 return typeof arg === 'number' ? Math.floor(arg).toString() : "NaN";
             case '%s': // Substitute as a string
-                return String(arg);
+                return string(arg);
             case '%f': // Substitute as a floating-point value
                 return typeof arg === 'number' ? arg.toFixed(6).toString() : "NaN";
             default:
@@ -440,7 +484,7 @@ function counter(label: string): void {
     const date = new Date().toISOString();
     const count = counters.get(label) || 0;
     if (config.count && config.level !== LogLevel.NONE) {
-        native?.log(`${colors.bgMagenta(colors.whiteBright(` ${LogLabel[LogLevel.COUNT]} `))} ${colors.magenta(String(count))} ${colors.gray(label)} ${colors.gray(date)}`);
+        native?.log(`${colors.bgMagenta(colors.whiteBright(` ${LogLabel[LogLevel.COUNT]} `))} ${colors.magenta(string(count))} ${colors.gray(label)} ${colors.gray(date)}`);
     }
 
     callback(LogLevel.COUNT, [label, count]);
@@ -472,67 +516,97 @@ function timer(label: string, logs: unknown[] = []): void {
 
 function prepareOutput(input:unknown[]): string[] {
     return input.map((item, index) => {
-        const type = (item instanceof Error) ? "error" : typeof item;
+        const type = typeof2(item);
         const str = convertToString(item);
         return `${colors.gray(`(${type})`)} ${str}`;
     });
 }
 
+function typeof2(item: unknown): string {
+    return (item instanceof Error) ? "error" : typeof item;
+}
+
 function convertToString(item: unknown): string {
     // Error objects with stack traces
     if (item instanceof Error) {
-        const message = `${colors.redBright(item.message || String(item) || "Error")}`;
+        const message = `${colors.redBright(item.message || string(item) || "Error")}`;
         const trace = item.stack && config.trace ? `\n${colors.gray(item.stack)}` : "";
         return `${message}${trace}`;
     }
     // JSON compatible objects (including arrays)
-    else if (String(item) === "[object Object]" || Array.isArray(item)) return `${colors.blue(serialize(item))}`; // Handle objects (including arrays)
+    else if (string(item) === "[object Object]" || Array.isArray(item)) return `${colors.blue(serialize(item))}`; // Handle objects (including arrays)
     // Primative values and all others
     else return colourize(item);
 }
 
 function colourize(value: unknown): string {
-    if (typeof value === "string") return `${colors.cyan(String(value))}`; // Strings
-    else if (typeof value === "number") return `${colors.yellow(String(value))}`; // Numbers
-    else if (typeof value === "boolean") return `${colors.blueBright(String(value))}`; // Booleans
-    else if (value === null || value === undefined) return `${colors.gray(String(value))}`; // Null/Undefined
-    return `${colors.blue(String(value))}`; // Other types
+    if (typeof value === "string") return `${colors.cyan(string(value))}`; // Strings
+    else if (typeof value === "number") return `${colors.yellow(string(value))}`; // Numbers
+    else if (typeof value === "boolean") return `${colors.blueBright(string(value))}`; // Booleans
+    else if (value === null || value === undefined) return `${colors.gray(string(value))}`; // Null/Undefined
+    return `${colors.blue(string(value))}`; // Other types
 }
 
-function serialize(obj: any, format: boolean = true): string {
+function serialize(obj: any, options: SerializerOptions  = SerializerDefaults): string {
     try {
         const json = JSON.stringify(obj, (key, value) => {
             if (["string", "number", "boolean"].includes(typeof value) || value === null) return value;
             // Objects
-            else if (String(value) === "[object Object]") return value;
+            else if (string(value) === "[object Object]") return value;
             // Arrays
             else if (Array.isArray(value)) return value;
             // Anything else (e.g. functions, symbols, BigInts)
-            else return String(value);
-        }, format ? 2 : undefined); // Indent with 2 spaces for pretty formatting, or no spaces for single-line
+            else return string(value);
+        }, 2); // Indent with 2 spaces for pretty formatting
 
-        if (!format) return json; // Remove newlines for single-line output
-        
-        const colourised:string[] = [];
-        for (let line of json.split("\n")) {
-            // Colour keys
-            line = line.replace(/"([^"]+)":/g, (_, key) => `${colors.magenta(`"${key}"`)}:`);
-            
-            // Colour string values
-            line = line.replace(/(:|^\s*) "([^"]*)"/g, (_, colon, str) => `${colon} ${colors.cyan(`"${str}"`)}`);
-            // Colour number values
-            line = line.replace(/(:|^\s*) (-?\d+(\.\d+)?)/g, (_, colon, num) => `${colon} ${colors.yellow(num)}`);
-            // Colour boolean values
-            line = line.replace(/(:|^\s*) (true|false)/g, (_, colon, bool) => `${colon} ${colors.blueBright(bool)}`);
-            // Colour null values
-            line = line.replace(/(:|^\s*) null/g, (_, colon) => `${colon} ${colors.gray("null")}`);
+        // For primative values, we can skip the JSON formatting and colourize
+        // them directly.
+        if (isJsonPrimative(json)) return options.colourize ? colourize(obj) : `${colors.reset(`${string(obj)}`)}`;
+        else if (options.colourize) {
+            // For objects and arrays, we need to parse the JSON string line by
+            // line and apply colour formatting to keys and values.
+            const colourised:string[] = [];
+            for (let line of json.split("\n")) {
+                // Colour keys
+                line = line.replace(/"([^"]+)":/g, (_, key) => `${colors.magenta(`"${key}"`)}:`);
+                
+                // Colour string values
+                line = line.replace(/(:|^\s*) "([^"]*)"/g, (_, colon, str) => `${colon} ${colors.cyan(`"${str}"`)}`);
+                // Colour number values
+                line = line.replace(/(:|^\s*) (-?\d+(\.\d+)?)/g, (_, colon, num) => `${colon} ${colors.yellow(num)}`);
+                // Colour boolean values
+                line = line.replace(/(:|^\s*) (true|false)/g, (_, colon, bool) => `${colon} ${colors.blueBright(bool)}`);
+                // Colour null values
+                line = line.replace(/(:|^\s*) null/g, (_, colon) => `${colon} ${colors.gray("null")}`);
 
-            colourised.push(line);
-        }
+                colourised.push(line);
+            }
 
-        return colourised.join("\n");
+            const output = colourised.join("\n");
+            return multiline(output);
+        } else return multiline(json);
     } catch (error) {
-        return String(obj);
+        return string(obj);
+    }
+
+    function multiline(json: string): string {
+        if (options.multiline) return json;
+        return json.replace(/\n\s*/g, " ").trim();
+    }
+
+    function isJsonPrimative(json: string): boolean {
+        // Check if the JSON string starts with '{' or '['
+        return !(json?.startsWith("{") || json?.startsWith("["));
+    }
+}
+
+// Fallback string conversion for objects that can't be JSON stringified and to
+// ensure safe string conversion for primitive values.
+function string(value: unknown): string {
+    try {
+        return String(value);
+    } catch (error) {
+        return Object.prototype.toString.call(value);
     }
 }
 

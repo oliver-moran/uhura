@@ -50,6 +50,29 @@ describe('Callback functionality', () => {
     expect(callbackMock).toHaveBeenCalledWith(LogLevel.ERROR, ['Saving this error']);
   });
 
+  test('Callback function is called for counters', () => {
+    const callbackMock = jest.fn();
+    console({ callback: callbackMock });
+
+    console.count('myCounter');
+    expect(callbackMock).toHaveBeenCalledWith(LogLevel.COUNT, ['myCounter', 1]);
+
+    console.count('myCounter');
+    expect(callbackMock).toHaveBeenCalledWith(LogLevel.COUNT, ['myCounter', 2]);
+
+    console.countReset('myCounter');
+    expect(callbackMock).toHaveBeenCalledWith(LogLevel.COUNT, ['myCounter', 0]);
+  });
+
+  test('Callback function is called for dir', () => {
+    const callbackMock = jest.fn();
+    console({ callback: callbackMock });
+
+    const obj = { name: 'Test Object', value: 42 };
+    console.dir(obj);
+    expect(callbackMock).toHaveBeenCalledWith(LogLevel.LOG, ['Test Object', 42]);
+  });
+  
   test('Callback function is called for tables', () => {
     const callbackMock = jest.fn();
     console({ callback: callbackMock });
@@ -82,16 +105,6 @@ describe('Callback functionality', () => {
     ]));
   });
 
-  test('Callback function is called for traces', () => {
-    const callbackMock = jest.fn();
-    console({ callback: callbackMock });
-
-    console.trace('This is a trace', { some: 'data' });
-    expect(callbackMock).toHaveBeenCalledWith(LogLevel.DEBUG, [
-      expect.any(String), 'This is a trace', { some: 'data' }
-    ]);
-  });
-
   test('Callback function is called for timers', () => {
     const callbackMock = jest.fn();
     console({ callback: callbackMock });
@@ -106,18 +119,14 @@ describe('Callback functionality', () => {
     expect(callbackMock).toHaveBeenCalledWith(LogLevel.TIME, ['myTimer', expect.any(Number)]);
   });
 
-  test('Callback function is called for counters', () => {
+  test('Callback function is called for traces', () => {
     const callbackMock = jest.fn();
     console({ callback: callbackMock });
 
-    console.count('myCounter');
-    expect(callbackMock).toHaveBeenCalledWith(LogLevel.COUNT, ['myCounter', 1]);
-
-    console.count('myCounter');
-    expect(callbackMock).toHaveBeenCalledWith(LogLevel.COUNT, ['myCounter', 2]);
-
-    console.countReset('myCounter');
-    expect(callbackMock).toHaveBeenCalledWith(LogLevel.COUNT, ['myCounter', 0]);
+    console.trace('This is a trace', { some: 'data' });
+    expect(callbackMock).toHaveBeenCalledWith(LogLevel.DEBUG, [
+      expect.any(String), 'This is a trace', { some: 'data' }
+    ]);
   });
 
   test('Errors in callback do not affect logging', () => {

@@ -87,6 +87,19 @@ describe('Logging levels', () => {
     expect(log).toHaveBeenCalledWith(expect.stringContaining('Bob'));
   });
 
+  test('Dir logs object properties', () => {
+    console({ level: LogLevel.LOG });
+    const obj = { name: 'Alice', age: 30 };
+    console.dir(obj);
+    expect(log).toHaveBeenCalledWith(expect.stringContaining(LogLabel[LogLevel.LOG]));
+    expect(log).toHaveBeenCalledWith(expect.stringContaining('(string)'));
+    expect(log).toHaveBeenCalledWith(expect.stringContaining('name'));
+    expect(log).toHaveBeenCalledWith(expect.stringContaining('Alice'));
+    expect(log).toHaveBeenCalledWith(expect.stringContaining('(number)'));
+    expect(log).toHaveBeenCalledWith(expect.stringContaining('age'));
+    expect(log).toHaveBeenCalledWith(expect.stringContaining('30'));
+  });
+
   test('Trace logs the stack trace', () => {
     console({ level: LogLevel.DEBUG });
     console.trace('Trace message', { some: 'data' });

@@ -24,7 +24,7 @@ describe('Substitutions', () => {
 
   test('Substution strings are replaced correctly', () => {
     console.log('This is a log %s %i %f %o.', 'message', 10.2, 100, { test: 'str',  test2: [1, 2, 3] });
-    expect(log).toHaveBeenCalledWith(expect.stringContaining('This is a log message 10 100.000000 {\"test\":\"str\",\"test2\":[1,2,3]}'));
+    expect(log).toHaveBeenCalledWith(expect.stringContaining('This is a log message 10 100.000000 { \"test\": \"str\", \"test2\": [ 1, 2, 3 ] }'));
   });
 
   test('Remaining arguments are logged correctly', () => {
