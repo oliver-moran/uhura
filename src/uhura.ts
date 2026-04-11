@@ -530,7 +530,9 @@ function convertToString(item: unknown): string {
     // Error objects with stack traces
     if (item instanceof Error) {
         const message = `${colors.redBright(item.message || string(item) || "Error")}`;
-        const trace = item.stack && config.trace ? `\n${colors.gray(item.stack)}` : "";
+        // Extract the stack trace, remove the first line (error message)
+        const stack = item.stack?.split("\n").slice(1).join("\n");
+        const trace = stack && config.trace ? `\n${colors.gray(stack)}` : "";
         return `${message}${trace}`;
     }
     // JSON compatible objects (including arrays)
