@@ -47,7 +47,7 @@ export const LogLabel = {
     4: "ERROR",
     5: "OFF",
     "TIME": "TIME",
-    "COUNT": "COUNT"
+    "COUNT": "COUNT",
 };
 
 /**
@@ -73,7 +73,7 @@ export type UhuraSettings = {
     count?: boolean; // Enable or disable count logging (default: true)
     time?: boolean; // Enable or disable timer logging (default: true)
     trace?: boolean; // Enable or disable stack traces for errors (default: true)
-    callback?: (level: LogLevel, args: unknown[]) => void; // Callback function for saving logs (default: no-op)
+    callback?: (level: LogLevel, args: Iterable<unknown>) => void; // Callback function for saving logs (default: no-op)
 };
 
 const config: UhuraSettings = {
@@ -81,7 +81,7 @@ const config: UhuraSettings = {
     count: true,
     time: true,
     trace: true,
-    callback: (level: LogLevel, args: unknown[]) => {
+    callback: (level: LogLevel, args: Iterable<unknown>) => {
         // Implement your custom logic here
     }
 };
@@ -190,7 +190,7 @@ console.count = (label: string = DEFAULT): void => {
     if (typeof label !== "string") label = DEFAULT;
     const count = counters.get(label) || 0;
     counters.set(label, count + 1);
-    outputCounter(label);
+    counter(label);
 };
 
 /**
@@ -204,8 +204,81 @@ console.countReset = (label: string = DEFAULT): void => {
     const exists = !!counters.get(label);
     if (exists) {
         counters.delete(label);
-        outputCounter(label);
+        counter(label);
     }
+};
+
+/**
+ * Logs a table to the console. If the log level is higher than LOG, this will
+ * not log anything.
+ * @param data The data to log as a table.
+ * @param columns The columns to include in the table.
+ */
+console.table = (data: Iterable<unknown> = [], columns?: string[] | number[]): void => {
+    // Ensure data is an array or object
+    if (typeof data === "undefined") data = [];
+    else if (typeof data !== "object") data = [data];
+
+    // Ensure columns are strings
+    if (Array.isArray(columns)) {
+        columns = columns.map(col => String(col));
+    } else if (typeof columns !== "undefined") columns = [String(columns)];
+
+    native.log(columns);
+
+    if (config.level! as number <= LogLevel.LOG) {
+        const str = format(LogLevel.LOG);
+        native?.log(str);
+        // FIXME: We currently lean on the native console.table for formatting,
+        // but blend with the custom formatting and log level control of uhura.
+        native?.table(data, columns as string[]);
+    }
+
+    // The native console.table doesn't allow us to capture the formatted
+    // table as an argument, so we'll just pass the original arguments to
+    // the callback, filtering the data based on the columns if necessary.
+
+    if (columns) {
+        // Filter the data based on the specified columns.
+        const filtered:Map<string, any> = new Map();
+
+        for (const key in data as Record<string, any>) {
+            const item: Record<string, unknown> = {};
+            try {
+                for (const column of columns) {
+                    if (column in (data as Record<string, any>)[key]) {
+                        item[column] = ((data as Record<string, any>)[key] as Record<string, unknown>)[column];
+                    }
+                }
+            } catch (error) {
+                // Ignore errors when accessing properties
+            }
+            filtered.set(key, item);
+        }
+
+        callback(LogLevel.LOG, filtered);
+    } else {
+        // If no columns are specified, pass the original data as an
+        // argument to the callback.
+        callback(LogLevel.LOG, new Map(Object.entries(data)));
+    }
+};
+
+/**
+ * Logs a stack trace to the console. If the log level is higher than DEBUG,
+ * this will not log anything.
+ * @param args The arguments to log.
+ */
+console.trace = (...args: unknown[]): void => {
+    const date = new Date().toISOString();
+    const label = `${colors.bgBlue(colors.whiteBright(` ${LogLabel[LogLevel.DEBUG]} `))} ${colors.gray(date)}`;
+    const output = prepareOutput(args);
+    const stack = (new Error().stack || "").split('\n').splice(2).join('\n');
+    const str = `${label}\n${output.length ? `${output.join("\n")}\n` : ""}${(config.trace) ? `${colors.gray(stack)}` : ""}`;
+
+    if (config.level! as number <= LogLevel.DEBUG)
+        native?.debug(str);
+    callback(LogLevel.DEBUG, [stack, ...args]);
 };
 
 /**
@@ -233,7 +306,7 @@ console.timeLog = (label: string = DEFAULT, ...args: unknown[]): void => {
         label = DEFAULT;
     }
 
-    outputTimer(label, args);
+    timer(label, args);
 };
 
 /**
@@ -244,20 +317,21 @@ console.timeLog = (label: string = DEFAULT, ...args: unknown[]): void => {
  */
 console.timeEnd = (label: string = DEFAULT): void => {
     if (typeof label !== "string") label = DEFAULT;
-    outputTimer(label);
+    timer(label);
     timers.delete(label);
 };
 
-// List the other console methods here that are not implemented in uhura, and
-// default them to the native console implementation.
-console.clear = () => native?.clear();
+// These methods don't require custom handling, so we can directly delegate to
+// the native console.
+console.clear = (): void => native?.clear();
+console.group = (...args: unknown[]): void => native?.group(...args);
+console.groupCollapsed = (...args: unknown[]): void => native?.groupCollapsed(...args);
+console.groupEnd = (): void => native?.groupEnd();
+
+// These methods will require custom handling but are not implemented yet, so
+// we'll just delegate to the native console for now.
 console.dir = (item: unknown, options?: Record<string, unknown>) => native?.dir(item, options);
 console.dirxml = (item: unknown) => native?.dirxml(item);
-console.group = (...args: unknown[]) => native?.group(...args);
-console.groupCollapsed = (...args: unknown[]) => native?.groupCollapsed(...args);
-console.groupEnd = () => native?.groupEnd();
-console.table = (...args: unknown[]) => native?.table(...args);
-console.trace = (...args: unknown[]) => native?.trace(...args);
 
 Object.freeze(console); // Prevent modification of custom console
 
@@ -268,7 +342,7 @@ Object.freeze(console); // Prevent modification of custom console
  */
 function handle(level: LogLevel, ...args: unknown[]):void {
     if (level >= config.level!) {
-        const str = format(args, level);
+        const str = format(level, args);
         switch (level) {
             case LogLevel.LOG:
                 native.log(str);
@@ -291,6 +365,10 @@ function handle(level: LogLevel, ...args: unknown[]):void {
         }
     }
 
+    callback(level, args);
+}
+
+function callback(level: LogLevel, args: Iterable<unknown>): void {
     try { config.callback!(level, args); }
     catch (error) { native.error(error); }
 }
@@ -301,7 +379,7 @@ function handle(level: LogLevel, ...args: unknown[]):void {
  * @param level The log level.
  * @returns Formatted string.
  */
-function format(args: unknown[], level:LogLevel = LogLevel.LOG): string {
+function format(level:LogLevel = LogLevel.LOG, args: unknown[] = []): string {
     const date = new Date().toISOString();
     
     if (typeof args[0] === "string")
@@ -309,7 +387,7 @@ function format(args: unknown[], level:LogLevel = LogLevel.LOG): string {
 
     const strs = prepareOutput(args);
 
-    return `${label(level)} ${colors.gray(date)}\n${strs.join("\n")}`;
+    return `${label(level)} ${colors.gray(date)}\n${strs.join("\n")}`.trim();
 
     function label(level: LogLevel): string {
         const label = ` ${LogLabel[level]} `;
@@ -360,18 +438,17 @@ function substitute(str: string, args: unknown[]): unknown[] {
     return [result, ...remaining];
 }
 
-function outputCounter(label: string): void {
+function counter(label: string): void {
     const date = new Date().toISOString();
     const count = counters.get(label) || 0;
     if (config.count && config.level !== LogLevel.NONE) {
         native.log(`${colors.bgMagenta(colors.whiteBright(` ${LogLabel[LogLevel.COUNT]} `))} ${colors.magenta(String(count))} ${colors.gray(label)} ${colors.gray(date)}`);
     }
 
-    try { config.callback!(LogLevel.COUNT, [label, count]); }
-    catch (error) { native.error(error); }
+    callback(LogLevel.COUNT, [label, count]);
 }
 
-function outputTimer(label: string, logs: unknown[] = []): void {
+function timer(label: string, logs: unknown[] = []): void {
     const date = new Date().toISOString();
     const start = timers.get(label);
     if (start !== undefined) {
@@ -386,13 +463,12 @@ function outputTimer(label: string, logs: unknown[] = []): void {
         if (config.time && config.level !== LogLevel.NONE) {
             native.log(`${colors.bgGreen(colors.whiteBright(` ${LogLabel[LogLevel.TIME]} `))} ${colors.green(str)} ${colors.gray(label)} ${colors.gray(date)}`);
             (logs || []).forEach(log => {
-                const str = format(logs, LogLevel.LOG);
+                const str = format(LogLevel.LOG, logs);
                 native.log(str)
             });
         }
 
-        try { config.callback!(LogLevel.TIME, [label, duration].concat(logs as [])); }
-        catch (error) { native.error(error); }
+        callback(LogLevel.TIME, [label, duration].concat(logs as []));
     }
 }
 

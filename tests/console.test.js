@@ -1,5 +1,5 @@
 import { console, native, LogLevel, LogLabel } from '../dist/uhura.min.js';
-import { jest } from '@jest/globals';
+import { expect, jest } from '@jest/globals';
 
 describe('Logging levels', () => {
   let log;
@@ -76,6 +76,24 @@ describe('Logging levels', () => {
 
     console.assert(true, 'This should not be logged');
     expect(error).not.toHaveBeenCalledWith(expect.stringContaining('This should not be logged'));
+  });
+
+  test('Table logs objects in a tabular format', () => {
+    console({ level: LogLevel.LOG });
+    const data = [{ name: 'Alice', age: 30 }, { name: 'Bob', age: 25 }];
+    console.table(data);
+    expect(log).toHaveBeenCalledWith(expect.stringContaining(LogLabel[LogLevel.LOG]));
+    expect(log).toHaveBeenCalledWith(expect.stringContaining('Alice'));
+    expect(log).toHaveBeenCalledWith(expect.stringContaining('Bob'));
+  });
+
+  test('Trace logs the stack trace', () => {
+    console({ level: LogLevel.DEBUG });
+    console.trace('Trace message', { some: 'data' });
+    expect(debug).toHaveBeenCalledWith(expect.stringContaining(LogLabel[LogLevel.DEBUG]));
+    expect(debug).toHaveBeenCalledWith(expect.stringContaining('Trace message'));
+    expect(debug).toHaveBeenCalledWith(expect.stringContaining('data')); // The object should be logged
+    expect(debug).toHaveBeenCalledWith(expect.stringContaining('at')); // Stack trace should contain 'at' lines
   });
   
   test('Logs messages at the correct log level', () => {

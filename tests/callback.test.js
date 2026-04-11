@@ -1,13 +1,14 @@
 import { console, native, LogLevel } from '../dist/uhura.min.js';
 import { expect, jest } from '@jest/globals';
 
-describe('Native functionality', () => {
+describe('Callback functionality', () => {
 
   beforeAll(() => {
     console({
-      level: LogLevel.LOG,
-      count: true,
-      time: true,
+      /* The callback should be called regardless of the log level. */
+      level: LogLevel.NONE,
+      count: false,
+      time: false,
       trace: true,
       callback: (level, args) => {}
     });
@@ -47,7 +48,48 @@ describe('Native functionality', () => {
 
     console.error('Saving this error');
     expect(callbackMock).toHaveBeenCalledWith(LogLevel.ERROR, ['Saving this error']);
-    
+  });
+
+  test('Callback function is called for tables', () => {
+    const callbackMock = jest.fn();
+    console({ callback: callbackMock });
+
+    const alice = { name: 'Alice', age: 30, location: 'Wonderland' };
+    const bob = { name: 'Bob', age: 25 };
+
+    console.table([alice, bob]);
+    expect(callbackMock).toHaveBeenCalledWith(LogLevel.LOG, new Map([
+      ['0', alice],
+      ['1', bob]
+    ]));
+
+    console.table({female: alice, male: bob});
+    expect(callbackMock).toHaveBeenCalledWith(LogLevel.LOG, new Map([
+      ['female', alice],
+      ['male', bob]
+    ]));
+
+    console.table([alice, bob], ['name']);
+    expect(callbackMock).toHaveBeenCalledWith(LogLevel.LOG, new Map([
+      ['0', { name: 'Alice' }],
+      ['1', { name: 'Bob' }]
+    ]));
+
+    console.table({ female: alice, male: bob }, ['name']);
+    expect(callbackMock).toHaveBeenCalledWith(LogLevel.LOG, new Map([
+      ['female', { name: 'Alice' }],
+      ['male', { name: 'Bob' }]
+    ]));
+  });
+
+  test('Callback function is called for traces', () => {
+    const callbackMock = jest.fn();
+    console({ callback: callbackMock });
+
+    console.trace('This is a trace', { some: 'data' });
+    expect(callbackMock).toHaveBeenCalledWith(LogLevel.DEBUG, [
+      expect.any(String), 'This is a trace', { some: 'data' }
+    ]);
   });
 
   test('Callback function is called for timers', () => {
