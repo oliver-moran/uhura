@@ -9,6 +9,35 @@
 
 import colors from 'yoctocolors';
 
+// Theme for formatting log messages with colors and styles.
+// TODO: This can be customisable in future.
+const theme = {
+    text: {
+        normal: (text: string): string => colors.gray(text),
+        muted: (text: string): string => colors.dim(text),
+        count: (text: string): string => colors.magenta(text),
+        time: (text: string): string => colors.green(text),
+    },
+    type: {
+        string: (value: string): string => colors.cyan(value),
+        number: (value: string): string => colors.yellow(value),
+        boolean: (value: string): string => colors.blueBright(value),
+        object: (value: string): string => colors.blue(value),
+        error: (value: string): string => colors.redBright(value),
+        undefined: (value: string): string => colors.gray(value),
+        key: (value: string): string => colors.magenta(value),
+    },
+    label: {
+        log: (label: string): string => colors.bgGray(colors.whiteBright(label)),
+        debug: (label: string): string => colors.bgBlue(colors.whiteBright(label)),
+        info: (label: string): string => colors.bgCyan(colors.whiteBright(label)),
+        warn: (label: string): string => colors.bgYellow(colors.black(label)),
+        error: (label: string): string => colors.bgRed(colors.whiteBright(label)),
+        time: (label: string): string => colors.bgGreen(colors.whiteBright(label)),
+        count: (label: string): string => colors.bgMagenta(colors.whiteBright(label)),
+    }
+};
+
 /**
  * Log levels for controlling the verbosity of logging and saving.
  * The levels are ordered from least to most severe, with Log being the least
@@ -244,9 +273,9 @@ console.dir = (item: unknown, options: DirOptions = DirDefaults): void => {
     for (const key of keys) {
         const prop = (item as Record<string, unknown>)[key];
         const type = typeof2(prop);
-        const str = `${colors.gray(`(${type})`)} ${colors.gray(`${key}`)} ${serialize(prop, { multiline: false, colourize: options?.colors })}`;
+        const str = `${theme.text.normal(`(${type})`)} ${theme.text.normal(`${key}`)} ${serialize(prop, { multiline: false, colourize: options?.colors })}`;
         if (enumerables.includes(key)) output.push(str);
-        else output.push(`${colors.dim(str)}`);
+        else output.push(`${theme.text.muted(str)}`);
         props.push(prop);
     }
     if (config.level! as number <= LogLevel.LOG)
@@ -326,7 +355,7 @@ console.trace = (...args: unknown[]): void => {
     const label = format(LogLevel.DEBUG);
     const output = prepareOutput(args);
     const stack = (new Error().stack || "").split('\n').splice(2).join('\n');
-    const str = `${label}\n${output.length ? `${output.join("\n")}\n` : ""}${(config.trace) ? `${colors.gray(stack)}` : ""}`;
+    const str = `${label}\n${output.length ? `${output.join("\n")}\n` : ""}${(config.trace) ? `${theme.text.normal(stack)}` : ""}`;
 
     if (config.level! as number <= LogLevel.DEBUG)
         native?.debug(str);
@@ -434,23 +463,23 @@ function format(level:LogLevel = LogLevel.LOG, args: unknown[] = []): string {
 
     const strs = prepareOutput(args);
 
-    return `${label(level)} ${colors.gray(date)}\n${strs.join("\n")}`.trim();
+    return `${label(level)} ${theme.text.normal(date)}\n${strs.join("\n")}`.trim();
 
     function label(level: LogLevel): string {
         const label = ` ${LogLabel[level]} `;
 
         switch (level) {
             case LogLevel.ERROR:
-                return `${colors.bgRed(colors.whiteBright(label))}`;
+                return `${theme.label.error(label)}`;
             case LogLevel.WARN:
-                return `${colors.bgYellow(colors.black(label))}`;
+                return `${theme.label.warn(label)}`;
             case LogLevel.INFO:
-                return `${colors.bgCyan(colors.whiteBright(label))}`;
+                return `${theme.label.info(label)}`;
             case LogLevel.DEBUG:
-                return `${colors.bgBlue(colors.whiteBright(label))}`;
+                return `${theme.label.debug(label)}`;
             default:
                 // No color for LogLevel.LOG or other unhandled levels
-                return `${colors.bgGray(colors.whiteBright(label))}`;
+                return `${theme.label.log(label)}`;
         }
     }
 }
@@ -489,7 +518,7 @@ function counter(label: string): void {
     const date = new Date().toISOString();
     const count = counters.get(label) || 0;
     if (config.count && config.level !== LogLevel.NONE) {
-        native?.log(`${colors.bgMagenta(colors.whiteBright(` ${LogLabel[LogLevel.COUNT]} `))} ${colors.magenta(string(count))} ${colors.gray(label)} ${colors.gray(date)}`);
+        native?.log(`${theme.label.count(` ${LogLabel[LogLevel.COUNT]} `)} ${theme.text.count(string(count))} ${theme.text.normal(label)} ${theme.text.normal(date)}`);
     }
 
     callback(LogLevel.COUNT, [label, count]);
@@ -508,7 +537,7 @@ function timer(label: string, logs: unknown[] = []): void {
 
         const str = `${days > 0 ? `${days}d ` : ""}${hours > 0 ? `${hours}h ` : ""}${minutes > 0 ? `${minutes}m ` : ""}${seconds.toFixed(3)}s`;
         if (config.time && config.level !== LogLevel.NONE) {
-            native?.log(`${colors.bgGreen(colors.whiteBright(` ${LogLabel[LogLevel.TIME]} `))} ${colors.green(str)} ${colors.gray(label)} ${colors.gray(date)}`);
+            native?.log(`${theme.label.time(` ${LogLabel[LogLevel.TIME]} `)} ${theme.text.time(str)} ${theme.text.normal(label)} ${theme.text.normal(date)}`);
             (logs || []).forEach(log => {
                 const str = format(LogLevel.LOG, logs);
                 native?.log(str)
@@ -523,7 +552,7 @@ function prepareOutput(input:unknown[]): string[] {
     return input.map((item, index) => {
         const type = typeof2(item);
         const str = convertToString(item);
-        return `${colors.gray(`(${type})`)} ${str}`;
+        return `${theme.text.normal(`(${type})`)} ${str}`;
     });
 }
 
@@ -534,24 +563,24 @@ function typeof2(item: unknown): string {
 function convertToString(item: unknown): string {
     // Error objects with stack traces
     if (item instanceof Error) {
-        const message = `${colors.redBright(item.message || string(item) || "Error")}`;
+        const message = `${theme.type.error(item.message || string(item) || "Error")}`;
         // Extract the stack trace, remove the first line (error message)
         const stack = item.stack?.split("\n").slice(1).join("\n");
-        const trace = stack && config.trace ? `\n${colors.gray(stack)}` : "";
+        const trace = stack && config.trace ? `\n${theme.text.normal(stack)}` : "";
         return `${message}${trace}`;
     }
     // JSON compatible objects (including arrays)
-    else if (string(item) === "[object Object]" || Array.isArray(item)) return `${colors.blue(serialize(item))}`; // Handle objects (including arrays)
+    else if (string(item) === "[object Object]" || Array.isArray(item)) return `${theme.type.object(serialize(item))}`; // Handle objects (including arrays)
     // Primative values and all others
     else return colourize(item);
 }
 
 function colourize(value: unknown): string {
-    if (typeof value === "string") return `${colors.cyan(string(value))}`; // Strings
-    else if (typeof value === "number") return `${colors.yellow(string(value))}`; // Numbers
-    else if (typeof value === "boolean") return `${colors.blueBright(string(value))}`; // Booleans
-    else if (value === null || value === undefined) return `${colors.gray(string(value))}`; // Null/Undefined
-    return `${colors.blue(string(value))}`; // Other types
+    if (typeof value === "string") return `${theme.type.string(string(value))}`; // Strings
+    else if (typeof value === "number") return `${theme.type.number(string(value))}`; // Numbers
+    else if (typeof value === "boolean") return `${theme.type.boolean(string(value))}`; // Booleans
+    else if (value === null || value === undefined) return `${theme.type.undefined(string(value))}`; // Null/Undefined
+    return `${theme.type.object(string(value))}`; // Other types
 }
 
 function serialize(obj: any, options: SerializerOptions  = SerializerDefaults): string {
@@ -575,16 +604,16 @@ function serialize(obj: any, options: SerializerOptions  = SerializerDefaults): 
             const colourised:string[] = [];
             for (let line of json.split("\n")) {
                 // Colour keys
-                line = line.replace(/"([^"]+)":/g, (_, key) => `${colors.magenta(`"${key}"`)}:`);
+                line = line.replace(/"([^"]+)":/g, (_, key) => `${theme.type.key(`"${key}"`)}:`);
                 
                 // Colour string values
-                line = line.replace(/(:|^\s*) "([^"]*)"/g, (_, colon, str) => `${colon} ${colors.cyan(`"${str}"`)}`);
+                line = line.replace(/(:|^\s*) "([^"]*)"/g, (_, colon, str) => `${colon} ${theme.type.string(`"${str}"`)}`);
                 // Colour number values
-                line = line.replace(/(:|^\s*) (-?\d+(\.\d+)?)/g, (_, colon, num) => `${colon} ${colors.yellow(num)}`);
+                line = line.replace(/(:|^\s*) (-?\d+(\.\d+)?)/g, (_, colon, num) => `${colon} ${theme.type.number(num)}`);
                 // Colour boolean values
-                line = line.replace(/(:|^\s*) (true|false)/g, (_, colon, bool) => `${colon} ${colors.blueBright(bool)}`);
+                line = line.replace(/(:|^\s*) (true|false)/g, (_, colon, bool) => `${colon} ${theme.type.boolean(bool)}`);
                 // Colour null values
-                line = line.replace(/(:|^\s*) null/g, (_, colon) => `${colon} ${colors.gray("null")}`);
+                line = line.replace(/(:|^\s*) null/g, (_, colon) => `${colon} ${theme.type.undefined("null")}`);
 
                 colourised.push(line);
             }
