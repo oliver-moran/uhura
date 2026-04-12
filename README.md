@@ -52,8 +52,8 @@ console.log(object);
 Additionally, there are a special logging levels, `LogLevel.TIME` and
 `LogLevel.COUNT`, that operate independently of this hierarchy.
 
-Note: The methods `console.dir` and `console.table` are logged at the level
-of `LogLevel.LOG` and `console.trace` at `LogLevel.DEBUG`.
+Note: The methods `console.dir`, `console.dirxml` and `console.table` are logged
+at the level of `LogLevel.LOG` and `console.trace` at `LogLevel.DEBUG`.
 
 ```javascript
 import { console, native, LogLevel } from "@oliver.moran/uhura";
