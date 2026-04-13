@@ -19,7 +19,7 @@ const theme = {
         time: (text: string): string => colors.green(text),
     },
     type: {
-        string: (value: string): string => colors.cyan(value),
+        string: (value: string): string => colors.green(value),
         number: (value: string): string => colors.yellow(value),
         boolean: (value: string): string => colors.blueBright(value),
         object: (value: string): string => colors.blue(value),
@@ -29,10 +29,10 @@ const theme = {
     },
     label: {
         log: (label: string): string => colors.bgGray(colors.whiteBright(label)),
-        debug: (label: string): string => colors.bgBlue(colors.whiteBright(label)),
-        info: (label: string): string => colors.bgCyan(colors.whiteBright(label)),
+        debug: (label: string): string => colors.bgCyan(colors.black(label)),
+        info: (label: string): string => colors.bgBlue(colors.whiteBright(label)),
         warn: (label: string): string => colors.bgYellow(colors.black(label)),
-        error: (label: string): string => colors.bgRed(colors.whiteBright(label)),
+        error: (label: string): string => colors.bgRed(colors.whiteBright(label)),        
         time: (label: string): string => colors.bgGreen(colors.whiteBright(label)),
         count: (label: string): string => colors.bgMagenta(colors.whiteBright(label)),
     }
@@ -597,7 +597,7 @@ function serialize(obj: any, options: SerializerOptions  = SerializerDefaults): 
 
         // For primative values, we can skip the JSON formatting and colourize
         // them directly.
-        if (isJsonPrimative(json)) return options.colourize ? colourize(obj) : `${colors.reset(`${string(obj)}`)}`;
+        if (isJsonPrimative(json)) return options.colourize ? colourize(obj) : `${theme.text.normal(`${string(obj)}`)}`;
         else if (options.colourize) {
             // For objects and arrays, we need to parse the JSON string line by
             // line and apply colour formatting to keys and values.
